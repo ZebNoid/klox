@@ -3,6 +3,7 @@ package org.lox.tool
 import java.io.IOException
 import java.io.PrintWriter
 import java.nio.file.Paths
+import java.util.*
 import kotlin.system.exitProcess
 
 
@@ -23,7 +24,7 @@ object GenerateAst {
         defineAst(outputDir, "Expr", listOf(
             "Binary   : Expr left, Token operator, Expr right",
             "Grouping : Expr expression",
-            "Literal  : Any value",
+            "Literal  : Any? value",
             "Unary    : Token operator, Expr right",
         ))
     }
@@ -39,32 +40,68 @@ object GenerateAst {
         writer.println()
         writer.println("sealed class $baseName {")
 
+        defineVisitor(writer, baseName, types)
+
         // The AST classes.
-        for ((index, type) in types.withIndex()) {
+        for (type in types) {
+            writer.println()
             val className = type.split(":")[0].trim()
             val fields = type.split(":")[1].trim()
             defineType(writer, baseName, className, fields)
-            if (index != types.lastIndex) {
-                writer.println()
-            }
         }
 
+        // The base accept() method.
+        writer.println()
+        writer.print("    ")
+        writer.println("abstract fun <R> accept(visitor: Visitor<R>): R")
         writer.println("}")
         writer.close()
     }
 
-    private fun defineType(
-        writer: PrintWriter, baseName: String?,
-        className: String?, fieldList: String
+    private fun defineVisitor(
+        writer: PrintWriter,
+        baseName: String,
+        types: List<String>
     ) {
-        writer.println("    data class $className(")
+        writer.print("    ")
+        writer.println("interface Visitor<R> {")
+
+        for (type in types) {
+            val typeName = type.split(":")[0].trim()
+            writer.print("    ")
+            writer.print("    ")
+            writer.println("fun visit$typeName$baseName(${baseName.lowercase()}: $typeName): R")
+        }
+
+        writer.print("    ")
+        writer.println("}")
+    }
+
+    private fun defineType(
+        writer: PrintWriter,
+        baseName: String,
+        className: String,
+        fieldList: String
+    ) {
+        writer.print("    ")
+        writer.println("data class $className(")
         // fields.
         val fields: List<String> = fieldList.split(", ")
         for (field in fields) {
             val type: String = field.split(" ")[0]
             val name: String = field.split(" ")[1]
-            writer.println("      val $name: $type,")
+            writer.print("    ")
+            writer.print("    ")
+            writer.println("val $name: $type,")
         }
-        writer.println("    ) : $baseName()")
+        writer.print("    ")
+        writer.println(") : $baseName() {")
+
+        // Visitor pattern.
+        writer.print("    ")
+        writer.print("    ")
+        writer.println("override fun <R> accept(visitor: Visitor<R>) = visitor.visit$className$baseName(this)")
+        writer.print("    ")
+        writer.println("}")
     }
 }
