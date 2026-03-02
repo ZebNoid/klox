@@ -49,13 +49,13 @@ object Lox {
 
 
     private fun run(source: String) {
-//        val scanner: Scanner = Scanner(source)
-//        val tokens: MutableList<Token?> = scanner.scanTokens()
-//
-//        // For now, just print the tokens.
-//        for (token in tokens) {
-//            println(token)
-//        }
+        val scanner: Scanner = Scanner(source)
+        val tokens: List<Token> = scanner.scanTokens()
+
+        // For now, just print the tokens.
+        for (token in tokens) {
+            println(token)
+        }
     }
 
     fun error(line: Int, message: String) {
