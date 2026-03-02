@@ -1,4 +1,4 @@
-package org.lox
+package org.lox.token
 
 class Token(
     val type: TokenType,

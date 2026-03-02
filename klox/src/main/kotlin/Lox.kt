@@ -1,5 +1,6 @@
 package org.lox
 
+import org.lox.token.Token
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader

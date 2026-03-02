@@ -1,7 +1,9 @@
 package org.lox
 
 import org.lox.Lox.error
-import org.lox.TokenType.*
+import org.lox.token.TokenType.*
+import org.lox.token.Token
+import org.lox.token.TokenType
 
 
 class Scanner(
@@ -84,7 +86,7 @@ class Scanner(
             } else if (isAlpha(c)) {
                 identifier()
             } else {
-                Lox.error(line, "Unexpected character.")
+                Lox.error(line, "Unexpected character \"${c}\" ${"\\u%04x".format(c.code)}.")
             }
         }
     }
