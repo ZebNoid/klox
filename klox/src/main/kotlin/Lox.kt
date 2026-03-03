@@ -1,6 +1,11 @@
 package org.lox
 
+import org.lox.ast.AstPrinter
+import org.lox.ast.Expr
+import org.lox.parser.Parser
+import org.lox.scanner.Scanner
 import org.lox.token.Token
+import org.lox.token.TokenType
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
@@ -53,10 +58,17 @@ object Lox {
         val scanner: Scanner = Scanner(source)
         val tokens: List<Token> = scanner.scanTokens()
 
-        // For now, just print the tokens.
-        for (token in tokens) {
-            println(token)
-        }
+        val parser: Parser = Parser(tokens)
+        val expression: Expr? = parser.parse()
+
+        // Stop if there was a syntax error.
+        if (hadError) return
+
+        println(AstPrinter().print(expression))
+//        // For now, just print the tokens.
+//        for (token in tokens) {
+//            println(token)
+//        }
     }
 
     fun error(line: Int, message: String) {
@@ -70,5 +82,13 @@ object Lox {
     ) {
         println("[line $line] Error $where: $message")
         hadError = true
+    }
+
+    fun error(token: Token, message: String) {
+        if (token.type === TokenType.EOF) {
+            report(token.line, " at end", message)
+        } else {
+            report(token.line, " at '" + token.lexeme + "'", message)
+        }
     }
 }

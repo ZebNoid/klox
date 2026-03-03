@@ -2,8 +2,8 @@ package org.lox.ast
 
 class AstPrinter : Expr.Visitor<String> {
 
-    fun print(expr: Expr): String {
-        return expr.accept<String>(this)
+    fun print(expr: Expr?): String {
+        return expr?.accept<String>(this) ?: "On expression"
     }
 
     override fun visitBinaryExpr(expr: Expr.Binary): String {

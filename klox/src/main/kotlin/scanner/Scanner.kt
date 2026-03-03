@@ -1,10 +1,8 @@
-package org.lox
+package org.lox.scanner
 
-import org.lox.Lox.error
-import org.lox.token.TokenType.*
+import org.lox.Lox
 import org.lox.token.Token
 import org.lox.token.TokenType
-
 
 class Scanner(
     private val source: String
@@ -19,22 +17,22 @@ class Scanner(
         const val NULL_TERMINATOR = '\u0000'
 
         private val keywords: HashMap<String, TokenType> = hashMapOf(
-            "and" to  AND,
-            "class" to  CLASS,
-            "else" to  ELSE,
-            "false" to  FALSE,
-            "for" to  FOR,
-            "fun" to  FUN,
-            "if" to  IF,
-            "nil" to  NIL,
-            "or" to  OR,
-            "print" to  PRINT,
-            "return" to  RETURN,
-            "super" to  SUPER,
-            "this" to  THIS,
-            "true" to  TRUE,
-            "var" to  VAR,
-            "while" to  WHILE,
+            "and" to TokenType.AND,
+            "class" to TokenType.CLASS,
+            "else" to TokenType.ELSE,
+            "false" to TokenType.FALSE,
+            "for" to TokenType.FOR,
+            "fun" to TokenType.FUN,
+            "if" to TokenType.IF,
+            "nil" to TokenType.NIL,
+            "or" to TokenType.OR,
+            "print" to TokenType.PRINT,
+            "return" to TokenType.RETURN,
+            "super" to TokenType.SUPER,
+            "this" to TokenType.THIS,
+            "true" to TokenType.TRUE,
+            "var" to TokenType.VAR,
+            "while" to TokenType.WHILE,
         )
     }
 
@@ -45,34 +43,34 @@ class Scanner(
             scanToken()
         }
 
-        tokens.add(Token(EOF, "", null, line))
+        tokens.add(Token(TokenType.EOF, "", null, line))
         return tokens
     }
 
     private fun scanToken() {
         val c: Char = advance()
         when (c) {
-            '(' -> addToken(LEFT_PAREN)
-            ')' -> addToken(RIGHT_PAREN)
-            '{' -> addToken(LEFT_BRACE)
-            '}' -> addToken(RIGHT_BRACE)
-            ',' -> addToken(COMMA)
-            '.' -> addToken(DOT)
-            '-' -> addToken(MINUS)
-            '+' -> addToken(PLUS)
-            ';' -> addToken(SEMICOLON)
-            '*' -> addToken(STAR)
+            '(' -> addToken(TokenType.LEFT_PAREN)
+            ')' -> addToken(TokenType.RIGHT_PAREN)
+            '{' -> addToken(TokenType.LEFT_BRACE)
+            '}' -> addToken(TokenType.RIGHT_BRACE)
+            ',' -> addToken(TokenType.COMMA)
+            '.' -> addToken(TokenType.DOT)
+            '-' -> addToken(TokenType.MINUS)
+            '+' -> addToken(TokenType.PLUS)
+            ';' -> addToken(TokenType.SEMICOLON)
+            '*' -> addToken(TokenType.STAR)
 
-            '!' -> addToken(if (match('=')) BANG_EQUAL else BANG)
-            '=' -> addToken(if (match('=')) EQUAL_EQUAL else EQUAL)
-            '<' -> addToken(if (match('=')) LESS_EQUAL else LESS)
-            '>' -> addToken(if (match('=')) GREATER_EQUAL else GREATER)
+            '!' -> addToken(if (match('=')) TokenType.BANG_EQUAL else TokenType.BANG)
+            '=' -> addToken(if (match('=')) TokenType.EQUAL_EQUAL else TokenType.EQUAL)
+            '<' -> addToken(if (match('=')) TokenType.LESS_EQUAL else TokenType.LESS)
+            '>' -> addToken(if (match('=')) TokenType.GREATER_EQUAL else TokenType.GREATER)
 
             '/' -> if (match('/')) {
                 // A comment goes until the end of the line.
                 while (peek() != '\n' && !isAtEnd()) advance()
             } else {
-                addToken(SLASH)
+                addToken(TokenType.SLASH)
             }
 
             // Ignore whitespace.
@@ -96,7 +94,7 @@ class Scanner(
 
         val text = source.substring(start, current)
         var type: TokenType? = keywords[text]
-        if (type == null) type = IDENTIFIER
+        if (type == null) type = TokenType.IDENTIFIER
 
         addToken(type)
     }
@@ -113,7 +111,7 @@ class Scanner(
         }
 
         addToken(
-            NUMBER,
+            TokenType.NUMBER,
             source.substring(start, current).toDouble()
         )
     }
@@ -125,16 +123,16 @@ class Scanner(
         }
 
         if (isAtEnd()) {
-            error(line, "Unterminated string.")
+            Lox.error(line, "Unterminated string.")
             return
         }
 
-        // The closing ".
+        // The closing (").
         advance()
 
         // Trim the surrounding quotes.
         val value = source.substring(start + 1, current - 1)
-        addToken(STRING, value)
+        addToken(TokenType.STRING, value)
     }
 
     private fun match(expected: Char): Boolean {
