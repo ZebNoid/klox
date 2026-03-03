@@ -1,7 +1,8 @@
 package org.lox
 
-import org.lox.ast.AstPrinter
 import org.lox.ast.Expr
+import org.lox.interpreter.Interpreter
+import org.lox.interpreter.RuntimeError
 import org.lox.parser.Parser
 import org.lox.scanner.Scanner
 import org.lox.token.Token
@@ -16,7 +17,9 @@ import kotlin.system.exitProcess
 
 
 object Lox {
+    val interpreter: Interpreter = Interpreter()
     var hadError: Boolean = false
+    var hadRuntimeError: Boolean = false
 
     @Throws(IOException::class)
     @JvmStatic
@@ -37,7 +40,9 @@ object Lox {
         run(String(bytes, Charset.defaultCharset()))
 
         // Indicate an error in the exit code.
+        // TODO https://man.freebsd.org/cgi/man.cgi?query=sysexits&apropos=0&sektion=0&manpath=FreeBSD+4.3-RELEASE&format=html
         if (hadError) exitProcess(65)
+        if (hadRuntimeError) exitProcess(70)
     }
 
     @Throws(IOException::class)
@@ -64,15 +69,18 @@ object Lox {
         // Stop if there was a syntax error.
         if (hadError) return
 
-        println(AstPrinter().print(expression))
-//        // For now, just print the tokens.
-//        for (token in tokens) {
-//            println(token)
-//        }
+        interpreter.interpret(expression)
+//        println(AstPrinter().print(expression))
+//        println(tokens.joinToString("\n"))
     }
 
     fun error(line: Int, message: String) {
         report(line, "", message)
+    }
+
+    fun runtimeError(error: RuntimeError) {
+        println("${error.message}\n[line ${error.token.line}]")
+        hadRuntimeError = true
     }
 
     private fun report(
