@@ -4,10 +4,19 @@ import org.lox.token.Token
 
 sealed class Expr {
     interface Visitor<R> {
+        fun visitAssignExpr(expr: Assign): R
         fun visitBinaryExpr(expr: Binary): R
         fun visitGroupingExpr(expr: Grouping): R
         fun visitLiteralExpr(expr: Literal): R
         fun visitUnaryExpr(expr: Unary): R
+        fun visitVariableExpr(expr: Variable): R
+    }
+
+    data class Assign(
+        val name: Token,
+        val value: Expr,
+    ) : Expr() {
+        override fun <R> accept(visitor: Visitor<R>) = visitor.visitAssignExpr(this)
     }
 
     data class Binary(
@@ -35,6 +44,12 @@ sealed class Expr {
         val right: Expr,
     ) : Expr() {
         override fun <R> accept(visitor: Visitor<R>) = visitor.visitUnaryExpr(this)
+    }
+
+    data class Variable(
+        val name: Token,
+    ) : Expr() {
+        override fun <R> accept(visitor: Visitor<R>) = visitor.visitVariableExpr(this)
     }
 
     abstract fun <R> accept(visitor: Visitor<R>): R

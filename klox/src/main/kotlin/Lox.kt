@@ -1,6 +1,8 @@
 package org.lox
 
+import org.lox.ast.AstPrinter
 import org.lox.ast.Expr
+import org.lox.ast.Stmt
 import org.lox.interpreter.Interpreter
 import org.lox.interpreter.RuntimeError
 import org.lox.parser.Parser
@@ -64,12 +66,13 @@ object Lox {
         val tokens: List<Token> = scanner.scanTokens()
 
         val parser: Parser = Parser(tokens)
-        val expression: Expr? = parser.parse()
+        val statements: List<Stmt> = parser.parse()
 
         // Stop if there was a syntax error.
         if (hadError) return
 
-        interpreter.interpret(expression)
+        interpreter.interpret(statements)
+        println(AstPrinter().print(statements))
 //        println(AstPrinter().print(expression))
 //        println(tokens.joinToString("\n"))
     }

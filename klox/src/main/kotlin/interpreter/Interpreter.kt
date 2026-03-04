@@ -2,15 +2,33 @@ package org.lox.interpreter
 
 import org.lox.Lox
 import org.lox.ast.Expr
+import org.lox.ast.Stmt
+import org.lox.environment.Environment
 import org.lox.token.Token
 import org.lox.token.TokenType.*
 
 
-class Interpreter : Expr.Visitor<Any?> {
-    fun interpret(expression: Expr?) {
+class Interpreter(
+    private val environment: Environment = Environment()
+) :
+    Expr.Visitor<Any?>,
+    Stmt.Visitor<Unit>
+{
+
+//    fun interpret(expression: Expr?) {
+//        try {
+//            val value = evaluate(expression)
+//            println(stringify(value))
+//        } catch (error: RuntimeError) {
+//            Lox.runtimeError(error)
+//        }
+//    }
+
+    fun interpret(statements: List<Stmt>) {
         try {
-            val value = evaluate(expression)
-            println(stringify(value))
+            for (statement in statements) {
+                execute(statement)
+            }
         } catch (error: RuntimeError) {
             Lox.runtimeError(error)
         }
@@ -57,11 +75,18 @@ class Interpreter : Expr.Visitor<Any?> {
                     return left + right
                 }
 
+                if (left is String || right is String) {
+                    return stringify(left) + stringify(right)
+                }
+
                 throw RuntimeError(expr.operator, "Operands must be two numbers or two strings.")
             }
 
             SLASH -> {
                 checkNumberOperands(expr.operator, left, right)
+                if (right == 0.0) {
+                    throw RuntimeError(expr.operator, "Operand divided by zero")
+                }
                 return (left as Double) / (right as Double)
             }
 
@@ -100,6 +125,10 @@ class Interpreter : Expr.Visitor<Any?> {
 
         // Unreachable.
         return null
+    }
+
+    override fun visitVariableExpr(expr: Expr.Variable): Any? {
+        return environment.get(expr.name)
     }
 
     private fun checkNumberOperand(operator: Token, operand: Any?) {
@@ -141,5 +170,33 @@ class Interpreter : Expr.Visitor<Any?> {
 
     private fun evaluate(expr: Expr?): Any? {
         return expr?.accept(this)
+    }
+
+    private fun execute(stmt: Stmt) {
+        stmt.accept(this)
+    }
+
+    override fun visitExpressionStmt(stmt: Stmt.Expression) {
+        evaluate(stmt.expression)
+    }
+
+    override fun visitPrintStmt(stmt: Stmt.Print) {
+        val value = evaluate(stmt.expression)
+        println(stringify(value))
+    }
+
+    override fun visitVarStmt(stmt: Stmt.Var) {
+        var value: Any? = null
+        if (stmt.initializer != null) {
+            value = evaluate(stmt.initializer)
+        }
+
+        environment.define(stmt.name.lexeme, value)
+    }
+
+    override fun visitAssignExpr(expr: Expr.Assign): Any? {
+        val value = evaluate(expr.value)
+        environment.assign(expr.name, value)
+        return value
     }
 }
