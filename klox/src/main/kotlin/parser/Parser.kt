@@ -9,6 +9,7 @@ import org.lox.ast.Stmt.While
 import org.lox.token.Token
 import org.lox.token.TokenType
 import org.lox.token.TokenType.*
+import java.util.*
 
 
 class Parser(
@@ -45,12 +46,60 @@ class Parser(
     }
 
     private fun statement(): Stmt {
-        if (match(IF)) return ifStatement();
+        if (match(FOR)) return forStatement()
+        if (match(IF)) return ifStatement()
         if (match(PRINT)) return printStatement()
         if (match(WHILE)) return whileStatement()
         if (match(LEFT_BRACE)) return Stmt.Block(block())
 
         return expressionStatement()
+    }
+
+    private fun forStatement(): Stmt {
+        consume(LEFT_PAREN, "Expect '(' after 'for'.")
+
+        var initializer: Stmt?
+        if (match(SEMICOLON)) {
+            initializer = null
+        } else if (match(VAR)) {
+            initializer = varDeclaration()
+        } else {
+            initializer = expressionStatement()
+        }
+
+        var condition: Expr? = null
+        if (!check(SEMICOLON)) {
+            condition = expression()
+        }
+        consume(SEMICOLON, "Expect ';' after loop condition.")
+
+        var increment: Expr? = null
+        if (!check(RIGHT_PAREN)) {
+            increment = expression()
+        }
+        consume(RIGHT_PAREN, "Expect ')' after for clauses.")
+
+        var body: Stmt = statement()
+
+        if (increment != null) {
+            body = Stmt.Block(
+                listOf(
+                    body,
+                    Stmt.Expression(increment)
+                )
+            )
+        }
+
+        if (condition == null) {
+            condition = Expr.Literal(true)
+        }
+        body = While(condition, body)
+
+        if (initializer != null) {
+            body = Stmt.Block(listOf(initializer, body))
+        }
+
+        return body
     }
 
     private fun ifStatement(): Stmt {
@@ -230,7 +279,7 @@ class Parser(
             return Expr.Grouping(expr)
         }
 
-        throw error(peek(), "Expect expression.");
+        throw error(peek(), "Expect expression.")
     }
 
     private fun match(vararg types: TokenType): Boolean {
