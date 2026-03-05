@@ -29,6 +29,10 @@ class AstPrinter(
         return expr.value.toString()
     }
 
+    override fun visitLogicalExpr(expr: Expr.Logical): String {
+        return "(logic ${expr.left.accept(this)} ${expr.operator.lexeme} ${expr.right.accept(this)})"
+    }
+
     override fun visitUnaryExpr(expr: Expr.Unary): String {
         return parenthesize(expr.operator.lexeme, expr.right)
     }
@@ -60,6 +64,12 @@ class AstPrinter(
 
     override fun visitExpressionStmt(stmt: Stmt.Expression): String {
         return parenthesize("expr", stmt.expression)
+    }
+
+    override fun visitIfStmt(stmt: Stmt.If): String {
+        return "(if ${stmt.condition.accept(this)} (${stmt.thenBranch.accept(this)}) ${stmt.elseBranch?.let { 
+            "else (${it.accept(this)})"
+        }})"
     }
 
     override fun visitPrintStmt(stmt: Stmt.Print): String {

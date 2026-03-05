@@ -3,6 +3,7 @@ package org.lox.parser
 import org.lox.Lox
 import org.lox.ast.Expr
 import org.lox.ast.Expr.Assign
+import org.lox.ast.Expr.Logical
 import org.lox.ast.Stmt
 import org.lox.token.Token
 import org.lox.token.TokenType
@@ -43,10 +44,25 @@ class Parser(
     }
 
     private fun statement(): Stmt {
+        if (match(IF)) return ifStatement();
         if (match(PRINT)) return printStatement()
         if (match(LEFT_BRACE)) return Stmt.Block(block())
 
         return expressionStatement()
+    }
+
+    private fun ifStatement(): Stmt {
+        consume(LEFT_PAREN, "Expect '(' after 'if'.")
+        val condition = expression()
+        consume(RIGHT_PAREN, "Expect ')' after if condition.")
+
+        val thenBranch = statement()
+        var elseBranch: Stmt? = null
+        if (match(ELSE)) {
+            elseBranch = statement()
+        }
+
+        return Stmt.If(condition, thenBranch, elseBranch)
     }
 
     private fun printStatement(): Stmt {
@@ -85,7 +101,7 @@ class Parser(
     }
 
     private fun assignment(): Expr {
-        val expr = equality()
+        val expr: Expr = or()
 
         if (match(EQUAL)) {
             val equals: Token = previous()
@@ -97,6 +113,30 @@ class Parser(
             }
 
             error(equals, "Invalid assignment target.")
+        }
+
+        return expr
+    }
+
+    private fun or(): Expr {
+        var expr: Expr = and()
+
+        while (match(OR)) {
+            val operator = previous()
+            val right: Expr = and()
+            expr = Logical(expr, operator, right)
+        }
+
+        return expr
+    }
+
+    private fun and(): Expr {
+        var expr = equality()
+
+        while (match(AND)) {
+            val operator = previous()
+            val right = equality()
+            expr = Logical(expr, operator, right)
         }
 
         return expr
@@ -201,7 +241,7 @@ class Parser(
 
     private fun check(type: TokenType): Boolean {
         if (isAtEnd()) return false
-        return peek().type === type
+        return peek().type == type
     }
 
     private fun advance(): Token {
@@ -210,7 +250,7 @@ class Parser(
     }
 
     private fun isAtEnd(): Boolean {
-        return peek().type === EOF
+        return peek().type == EOF
     }
 
     private fun peek(): Token {
