@@ -79,4 +79,8 @@ class AstPrinter(
     override fun visitVarStmt(stmt: Stmt.Var): String {
         return "(var ${stmt.name.lexeme} ${stmt.initializer?.accept(this) ?: "nil"})"
     }
+
+    override fun visitWhileStmt(stmt: Stmt.While): String {
+        return "(while ${stmt.condition.accept(this)} ${stmt.body.accept(this)})"
+    }
 }
