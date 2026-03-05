@@ -54,6 +54,10 @@ class AstPrinter(
         return builder.toString()
     }
 
+    override fun visitBlockStmt(stmt: Stmt.Block): String {
+        return "(block [${stmt.statements.joinToString(", ") { it.accept(this) }}])"
+    }
+
     override fun visitExpressionStmt(stmt: Stmt.Expression): String {
         return parenthesize("expr", stmt.expression)
     }

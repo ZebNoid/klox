@@ -9,11 +9,10 @@ import org.lox.token.TokenType.*
 
 
 class Interpreter(
-    private val environment: Environment = Environment()
+    private var environment: Environment = Environment()
 ) :
     Expr.Visitor<Any?>,
-    Stmt.Visitor<Unit>
-{
+    Stmt.Visitor<Unit> {
 
 //    fun interpret(expression: Expr?) {
 //        try {
@@ -174,6 +173,23 @@ class Interpreter(
 
     private fun execute(stmt: Stmt) {
         stmt.accept(this)
+    }
+
+    fun executeBlock(statements: List<Stmt>, blockEnvironment: Environment) {
+        val previous: Environment = environment
+        try {
+            environment = blockEnvironment
+
+            for (statement in statements) {
+                execute(statement)
+            }
+        } finally {
+            environment = previous
+        }
+    }
+
+    override fun visitBlockStmt(stmt: Stmt.Block) {
+        executeBlock(stmt.statements, Environment(environment));
     }
 
     override fun visitExpressionStmt(stmt: Stmt.Expression) {
