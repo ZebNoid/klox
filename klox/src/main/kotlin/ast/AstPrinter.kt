@@ -85,6 +85,10 @@ class AstPrinter(
         return parenthesize("print", stmt.expression)
     }
 
+    override fun visitReturnStmt(stmt: Stmt.Return): String {
+        return "(return ${stmt.keyword.lexeme} ${stmt.value?.accept(this) }})"
+    }
+
     override fun visitVarStmt(stmt: Stmt.Var): String {
         return "(var ${stmt.name.lexeme} ${stmt.initializer?.accept(this) ?: "nil"})"
     }

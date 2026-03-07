@@ -23,7 +23,11 @@ class LoxFunction(
             )
         }
 
-        interpreter.executeBlock(declaration.body, environment)
+        try {
+            interpreter.executeBlock(declaration.body, environment)
+        } catch (returnValue: Return) {
+            return returnValue.value
+        }
         return null
     }
 

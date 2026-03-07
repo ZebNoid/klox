@@ -261,6 +261,13 @@ class Interpreter(
         println(stringify(value))
     }
 
+    override fun visitReturnStmt(stmt: Stmt.Return) {
+        var value: Any? = null
+        if (stmt.value != null) value = evaluate(stmt.value)
+
+        throw Return(value)
+    }
+
     override fun visitVarStmt(stmt: Stmt.Var) {
         var value: Any? = null
         if (stmt.initializer != null) {
