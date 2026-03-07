@@ -5,15 +5,28 @@ import org.lox.ast.Expr
 import org.lox.ast.Stmt
 import org.lox.environment.Environment
 import org.lox.token.Token
-import org.lox.token.TokenType
 import org.lox.token.TokenType.*
 
 
 class Interpreter(
-    private var environment: Environment = Environment()
+    val globals : Environment = Environment(),
+    private var environment: Environment = globals
 ) :
     Expr.Visitor<Any?>,
-    Stmt.Visitor<Unit> {
+    Stmt.Visitor<Unit>
+{
+
+        init {
+            globals.define("clock", object : LoxCallable {
+                override fun arity(): Int = 0
+
+                override fun call(interpreter: Interpreter, arguments: List<Any?>): Any {
+                    return System.currentTimeMillis().toDouble() / 1000.0
+                }
+
+                override fun toString(): String = "<native fn>"
+            })
+        }
 
 //    fun interpret(expression: Expr?) {
 //        try {
@@ -100,6 +113,27 @@ class Interpreter(
 
         // Unreachable.
         return null
+    }
+
+    override fun visitCallExpr(expr: Expr.Call): Any? {
+        val callee = evaluate(expr.callee)
+
+        val arguments: MutableList<Any?> = mutableListOf()
+        for (argument in expr.arguments) {
+            arguments.add(evaluate(argument))
+        }
+
+        if (callee !is LoxCallable) {
+            throw RuntimeError(expr.paren, "Can only call functions and classes.")
+        }
+
+        val function: LoxCallable = callee
+
+        if (arguments.size != function.arity()) {
+            throw RuntimeError(expr.paren, "Expected ${function.arity()} arguments but got ${arguments.size}.")
+        }
+
+        return function.call(this, arguments)
     }
 
     override fun visitGroupingExpr(expr: Expr.Grouping): Any? {
@@ -207,6 +241,11 @@ class Interpreter(
 
     override fun visitExpressionStmt(stmt: Stmt.Expression) {
         evaluate(stmt.expression)
+    }
+
+    override fun visitFunctionStmt(stmt: Stmt.Function) {
+        val function = LoxFunction(stmt)
+        environment.define(stmt.name.lexeme, function)
     }
 
     override fun visitIfStmt(stmt: Stmt.If) {

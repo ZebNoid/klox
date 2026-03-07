@@ -20,6 +20,11 @@ class AstPrinter(
         return parenthesize(expr.operator.lexeme, expr.left, expr.right)
     }
 
+    override fun visitCallExpr(expr: Expr.Call): String {
+//        return parenthesize(expr.paren.lexeme, expr.callee, *expr.arguments.toTypedArray())
+        return "(fun ${expr.callee.accept(this)}(${expr.arguments.joinToString(", ") { it.accept(this) }}))"
+    }
+
     override fun visitGroupingExpr(expr: Expr.Grouping): String {
         return parenthesize("group", expr.expression)
     }
@@ -64,6 +69,10 @@ class AstPrinter(
 
     override fun visitExpressionStmt(stmt: Stmt.Expression): String {
         return parenthesize("expr", stmt.expression)
+    }
+
+    override fun visitFunctionStmt(stmt: Stmt.Function): String {
+        return "(fun ${stmt.name.lexeme}(${stmt.params.joinToString(", ") { it.lexeme}}))"
     }
 
     override fun visitIfStmt(stmt: Stmt.If): String {
